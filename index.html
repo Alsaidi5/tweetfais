@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>نظام تقارير التغريدات والتحليل</title>
+    <style>
+        /* إعدادات الخط XB Niloofar */
+        @font-face {
+            font-family: 'XB Niloofar';
+            src: local('XB Niloofar');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'XB Niloofar';
+            src: local('XB Niloofar Bold');
+            font-weight: bold;
+        }
+
+        @page { size: A4 landscape; margin: 0; }
+        body { margin: 0; padding: 0; background: #e0e0e0; font-family: 'XB Niloofar', 'Arial', sans-serif; }
+
+        /* لوحة التحكم */
+        .no-print { 
+            max-width: 800px; margin: 20px auto; background: white; 
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        }
+        .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; }
+        .full { grid-column: span 2; }
+        button { 
+            background: #00796b; color: white; border: none; padding: 15px; 
+            border-radius: 8px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; 
+        }
+
+        /* قالب التقرير */
+        #report-page {
+            width: 297mm; height: 210mm;
+            margin: auto; position: relative;
+            background-image: url('template.jpg'); 
+            background-size: 100% 100%;
+            background-color: white;
+            display: none; 
+        }
+
+        .absolute-text { position: absolute; color: #333; font-weight: bold; pointer-events: none; }
+
+        #p-serial { top: 24mm; left: 258mm; font-size: 24pt; color: #fff; width: 20mm; text-align: center; }
+        #p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
+        #p-date      { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
+        #p-keywords  { top: 97mm; left: 193mm; font-size: 14pt; width: 40mm; text-align: center; line-height: 1.4; }
+
+        #p-likes   { top: 113mm; left: 210mm; font-size: 14pt; color: #000000; }
+        #p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000000; }
+
+        #p-text { 
+            top: 75mm; right: 63mm; width: 40mm; height: 20mm;
+            font-size: 10pt; line-height: 1.4; text-align:center;
+            overflow: hidden; white-space: pre-wrap;
+            display: flex; align-items: flex-start;
+        }
+
+        /* تعديل الرسم البياني ليصبح طولياً بالكامل */
+        .views-chart-container {
+            position: absolute;
+            top: 40mm; left: 154mm;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .views-circle { width: 12px; height: 12px; background: #D4A829; border-radius: 50%; }
+        .views-label { font-size: 12pt; font-weight: bold; color: #444; }
+        
+        .progress-bg {
+            width: 15mm; height: 110mm; background: #ccc; border-radius: 4px;
+            overflow: hidden; border: 1px solid #ccc; position: relative;
+            display: flex; flex-direction: column; justify-content: flex-end; 
+        }
+        
+        .progress-fill {
+            width: 100%; background: #D4A829;
+            height: 0%; transition: height 0.5s ease-out;
+        }
+
+        /* حاوية الأرقام الجانبية المحدثة */
+        .chart-layout { display: flex; align-items: flex-end; gap: 10px; }
+        .axis-numbers { 
+            display: flex; 
+            flex-direction: column-reverse; 
+            justify-content: space-between; 
+            height: 110mm; 
+            font-size: 9pt; 
+            font-weight: bold; 
+            color: #555;
+            text-align: left;
+            min-width: 40px;
+        }
+
+        #p-link-btn {
+            position: absolute; top: 142mm; left: 190mm; width: 30mm;
+            padding: 25px; background: #00796b00; color: rgba(255, 255, 255, 0); text-align: center;
+            text-decoration: none; border-radius: 4px; font-size: 10pt;
+            display: none; 
+        }
+
+        .img-box {
+            position: absolute; top: 20mm; left: 25mm;
+            width: 120mm; height: 140mm; 
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        #p-img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 4px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            #report-page { display: block !important; margin: 0; border: none; }
+            body { background: white; }
+            .progress-bg { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .progress-fill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print">
+    <h2>مشروع التغريدات: التحليل والتفاعل</h2>
+    <div class="grid-input">
+        <input type="text" id="serialNum" placeholder="الرقم التسلسلي" oninput="sync()">
+        <input type="text" id="newspaper" placeholder="اسم الحساب" oninput="sync()">
+        <input type="text" id="dateText" placeholder="التاريخ" oninput="sync()">
+        <input type="number" id="likesCount" placeholder="عدد الإعجابات " oninput="sync()">
+        <input type="number" id="repliesCount" placeholder="عدد الردود " oninput="sync()">
+        <input type="number" id="viewsCount" placeholder="عدد المشاهدات الحالي" oninput="sync()">
+        <input type="number" id="viewsTarget" placeholder="سقف المشاهدات (المستهدف)" oninput="sync()">
+        
+        <textarea id="keywords" placeholder="الكلمات المفتاحية" class="full" oninput="sync()"></textarea>
+        <textarea id="fullText" rows="4" placeholder="نص التغريدة" class="full" oninput="sync()"></textarea>
+        <input type="url" id="newsLink" placeholder="رابط التغريدة" oninput="sync()">
+        <div class="full">
+            <label>صورة التغريدة:</label>
+            <input type="file" id="imageInput" accept="image/*" onchange="previewImage(this)">
+        </div>
+    </div>
+    <button onclick="window.print()">طباعة تقرير التفاعل PDF 🖨️</button>
+</div>
+
+<div id="report-page">
+    <div id="p-serial" class="absolute-text"></div>
+    <div id="p-newspaper" class="absolute-text"></div>
+    <div id="p-date" class="absolute-text"></div>
+    <div id="p-keywords" class="absolute-text"></div>
+    <div id="p-likes" class="absolute-text"></div>
+    <div id="p-replies" class="absolute-text"></div>
+    <div id="p-text" class="absolute-text"></div>
+    
+    <div class="views-chart-container">
+        <div class="header-row">
+            <div class="views-circle"></div>
+            <div class="views-label">المشاهدات</div>
+        </div>
+        <div class="chart-layout">
+            <div id="axis-labels" class="axis-numbers"></div>
+            <div class="progress-bg">
+                <div id="views-bar" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <a id="p-link-btn" target="_blank">فتح التغريدة</a>
+    <div class="img-box">
+        <img id="p-img" src="">
+    </div>
+</div>
+
+<script>
+    function sync() {
+        document.getElementById("report-page").style.display = "block";
+        document.getElementById("p-serial").innerText = document.getElementById("serialNum").value;
+        document.getElementById("p-newspaper").innerText = document.getElementById("newspaper").value;
+        document.getElementById("p-date").innerText = document.getElementById("dateText").value;
+        document.getElementById("p-keywords").innerText = document.getElementById("keywords").value;
+        document.getElementById("p-likes").innerText = (document.getElementById("likesCount").value || 0);
+        document.getElementById("p-replies").innerText = (document.getElementById("repliesCount").value || 0);
+        
+        const textElem = document.getElementById("p-text");
+        textElem.innerText = document.getElementById("fullText").value;
+        adjustFontSize(textElem);
+
+        let count = parseFloat(document.getElementById("viewsCount").value) || 0;
+        let target = parseFloat(document.getElementById("viewsTarget").value) || 1;
+        
+        let percentage = (count / target) * 100;
+        if (percentage > 100) percentage = 100;
+        document.getElementById("views-bar").style.height = percentage + "%";
+
+        updateAxisLabels(target);
+
+        let link = document.getElementById("newsLink").value;
+        let btn = document.getElementById("p-link-btn");
+        if(link && link.startsWith('http')) {
+            btn.href = link;
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+
+    function updateAxisLabels(target) {
+        const axis = document.getElementById("axis-labels");
+        axis.innerHTML = ""; 
+        
+        if (target <= 0) return;
+
+        // منطق "كانفا" الذكي لتحديد القفزات
+        let magnitude = Math.pow(10, Math.floor(Math.log10(target)));
+        let step = magnitude / 10; 
+        let startValue = Math.floor(target / magnitude) * magnitude;
+
+        // حالة خاصة للأرقام الصغيرة
+        if (target < 1000) {
+            startValue = 0;
+            step = 100;
+        }
+
+        // إنشاء الأرقام بناءً على النطاق والقفزة
+        for (let i = startValue; i <= target; i += step) {
+            let label = document.createElement("div");
+            label.innerText = Math.round(i).toLocaleString();
+            axis.appendChild(label);
+            if (axis.children.length > 11) break; 
+        }
+    }
+
+    function adjustFontSize(element) {
+        let fontSize = 13;
+        element.style.fontSize = fontSize + "pt";
+        while (element.scrollHeight > element.offsetHeight && fontSize > 7) {
+            fontSize -= 0.5;
+            element.style.fontSize = fontSize + "pt";
+        }
+    }
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById("p-img").src = e.target.result;
+                document.getElementById("report-page").style.display = "block";
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+
+</body>
+</html>
