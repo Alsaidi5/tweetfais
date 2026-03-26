@@ -2,20 +2,13 @@
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام تقارير التغريدات والتحليل</title>
+    <title>نظام تقارير التغريدات والتحليل - المطور</title>
     <style>
-        /* إعدادات الخط XB Niloofar */
         @font-face {
             font-family: 'XB Niloofar';
             src: local('XB Niloofar');
             font-weight: normal;
         }
-        @font-face {
-            font-family: 'XB Niloofar';
-            src: local('XB Niloofar Bold');
-            font-weight: bold;
-        }
-
         @page { size: A4 landscape; margin: 0; }
         body { margin: 0; padding: 0; background: #e0e0e0; font-family: 'XB Niloofar', 'Arial', sans-serif; }
 
@@ -25,7 +18,7 @@
             padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
         }
         .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
         .full { grid-column: span 2; }
         button { 
             background: #00796b; color: white; border: none; padding: 15px; 
@@ -36,10 +29,9 @@
         #report-page {
             width: 297mm; height: 210mm;
             margin: auto; position: relative;
-           background-image:url('https://raw.githubusercontent.com/Alsaidi5/tweetfais/main/template.jpg'),
-             url('template.jpg'); 
+            /* الطريقة المزدوجة للخلفية من مستودع faisform */
+            background-image: url('https://raw.githubusercontent.com/Alsaidi5/tweetfais/main/template.jpg'), url('template.jpg'); 
             background-size: 100% 100%;
-            background-repeat: no-repeat;
             background-color: white;
             display: none; 
         }
@@ -50,7 +42,6 @@
         #p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
         #p-date      { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
         #p-keywords  { top: 97mm; left: 193mm; font-size: 14pt; width: 40mm; text-align: center; line-height: 1.4; }
-
         #p-likes   { top: 113mm; left: 210mm; font-size: 14pt; color: #000000; }
         #p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000000; }
 
@@ -61,7 +52,7 @@
             display: flex; align-items: flex-start;
         }
 
-        /* تعديل الرسم البياني ليصبح طولياً بالكامل */
+        /* الرسم البياني - العمود الثابت */
         .views-chart-container {
             position: absolute;
             top: 40mm; left: 154mm;
@@ -74,15 +65,13 @@
         .progress-bg {
             width: 15mm; height: 110mm; background: #ccc; border-radius: 4px;
             overflow: hidden; border: 1px solid #ccc; position: relative;
-            display: flex; flex-direction: column; justify-content: flex-end; 
         }
         
         .progress-fill {
             width: 100%; background: #D4A829;
-            height: 0%; transition: height 0.5s ease-out;
+            height: 100% !important; /* ثابت ممتلئ دائماً */
         }
 
-        /* حاوية الأرقام الجانبية المحدثة */
         .chart-layout { display: flex; align-items: flex-end; gap: 10px; }
         .axis-numbers { 
             display: flex; 
@@ -93,14 +82,13 @@
             font-weight: bold; 
             color: #555;
             text-align: left;
-            min-width: 40px;
+            min-width: 45px;
         }
 
         #p-link-btn {
             position: absolute; top: 142mm; left: 190mm; width: 30mm;
-            padding: 25px; background: #00796b00; color: rgba(255, 255, 255, 0); text-align: center;
-            text-decoration: none; border-radius: 4px; font-size: 10pt;
-            display: none; 
+            padding: 25px; background: transparent; color: transparent;
+            text-decoration: none; display: none; 
         }
 
         .img-box {
@@ -115,25 +103,23 @@
             .no-print { display: none !important; }
             #report-page { display: block !important; margin: 0; border: none; }
             body { background: white; }
-            .progress-bg { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .progress-fill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .progress-bg, .progress-fill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
 <body>
 
 <div class="no-print">
-    <h2>مشروع التغريدات: التحليل والتفاعل</h2>
+    <h2>نظام تقارير التغريدات - الإصدار المتقدم</h2>
     <div class="grid-input">
         <input type="text" id="serialNum" placeholder="الرقم التسلسلي" oninput="sync()">
         <input type="text" id="newspaper" placeholder="اسم الحساب" oninput="sync()">
-        <input type="text" id="dateText" placeholder="التاريخ" oninput="sync()">
+        <input type="text" id="dateText" placeholder="المتابعون" oninput="sync()">
         <input type="number" id="likesCount" placeholder="عدد الإعجابات " oninput="sync()">
         <input type="number" id="repliesCount" placeholder="عدد الردود " oninput="sync()">
-        <input type="number" id="viewsCount" placeholder="عدد المشاهدات الحالي" oninput="sync()">
-        <input type="number" id="viewsTarget" placeholder="سقف المشاهدات (المستهدف)" oninput="sync()">
+        <input type="number" id="viewsCount" placeholder="إجمالي المشاهدات" oninput="sync()">
         
-        <textarea id="keywords" placeholder="الكلمات المفتاحية" class="full" oninput="sync()"></textarea>
+        <textarea id="keywords" placeholder=" اعادة التغريد" class="full" oninput="sync()"></textarea>
         <textarea id="fullText" rows="4" placeholder="نص التغريدة" class="full" oninput="sync()"></textarea>
         <input type="url" id="newsLink" placeholder="رابط التغريدة" oninput="sync()">
         <div class="full">
@@ -141,7 +127,7 @@
             <input type="file" id="imageInput" accept="image/*" onchange="previewImage(this)">
         </div>
     </div>
-    <button onclick="window.print()">طباعة تقرير التفاعل PDF 🖨️</button>
+    <button onclick="window.print()">طباعة التقرير النهائي PDF 🖨️</button>
 </div>
 
 <div id="report-page">
@@ -161,12 +147,12 @@
         <div class="chart-layout">
             <div id="axis-labels" class="axis-numbers"></div>
             <div class="progress-bg">
-                <div id="views-bar" class="progress-fill"></div>
+                <div class="progress-fill"></div>
             </div>
         </div>
     </div>
 
-    <a id="p-link-btn" target="_blank">فتح التغريدة</a>
+    <a id="p-link-btn" target="_blank"></a>
     <div class="img-box">
         <img id="p-img" src="">
     </div>
@@ -186,14 +172,9 @@
         textElem.innerText = document.getElementById("fullText").value;
         adjustFontSize(textElem);
 
+        // منطق العداد التنازلي (10 أرقام)
         let count = parseFloat(document.getElementById("viewsCount").value) || 0;
-        let target = parseFloat(document.getElementById("viewsTarget").value) || 1;
-        
-        let percentage = (count / target) * 100;
-        if (percentage > 100) percentage = 100;
-        document.getElementById("views-bar").style.height = percentage + "%";
-
-        updateAxisLabels(target);
+        updateAxisLabels(count);
 
         let link = document.getElementById("newsLink").value;
         let btn = document.getElementById("p-link-btn");
@@ -211,23 +192,17 @@
         
         if (target <= 0) return;
 
-        // منطق "كانفا" الذكي لتحديد القفزات
-        let magnitude = Math.pow(10, Math.floor(Math.log10(target)));
-        let step = magnitude / 10; 
-        let startValue = Math.floor(target / magnitude) * magnitude;
+        // تقسيم الرقم المدخل إلى 10 أجزاء متساوية تماماً
+        let step = target / 10; 
 
-        // حالة خاصة للأرقام الصغيرة
-        if (target < 1000) {
-            startValue = 0;
-            step = 100;
-        }
-
-        // إنشاء الأرقام بناءً على النطاق والقفزة
-        for (let i = startValue; i <= target; i += step) {
+        // إنشاء 11 علامة لضمان ظهور 10 قفزات (من صفر إلى الرقم النهائي)
+        for (let i = 0; i <= 10; i++) {
+            let labelValue = step * i;
             let label = document.createElement("div");
-            label.innerText = Math.round(i).toLocaleString();
+            
+            // تنسيق الرقم بفاصلة الآلاف وتقريبه
+            label.innerText = Math.round(labelValue).toLocaleString();
             axis.appendChild(label);
-            if (axis.children.length > 11) break; 
         }
     }
 
