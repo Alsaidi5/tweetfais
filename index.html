@@ -195,38 +195,25 @@
         } else {
             btn.style.display = "none";
         }
-    }
-
-    function updateAxisLabels(target) {
+    }function updateAxisLabels(target) {
         const axis = document.getElementById("axis-labels");
         axis.innerHTML = ""; 
         if (target <= 0) return;
-
-        let step;
-        
-        // إذا كان الرقم 100,000 أو أكثر، القفزة تكون كل 10 آلاف
-        if (target >= 100000) {
-            step = 10000;
-        } 
-        // إذا كان الرقم بين 1,000 و 100,000، القفزة تكون كل 1,000
-        else if (target >= 1000) {
-            step = 1000;
-        } 
-        // إذا كان الرقم أقل من 1,000، القفزة تكون كل 100
-        else {
-            step = 100;
-        }
-
-        // إنشاء 11 نقطة (من 0 إلى 10) لضمان تغطية النطاق
+        let step = target / 10; 
         for (let i = 0; i <= 10; i++) {
             let labelValue = step * i;
-            
-            // التوقف إذا تجاوزنا الرقم المطلوب بمسافة كبيرة ليبقى الرسم متناسقاً
-            if (labelValue > target + step) break;
-
             let label = document.createElement("div");
-            label.innerText = labelValue.toLocaleString();
+            label.innerText = Math.round(labelValue).toLocaleString();
             axis.appendChild(label);
+        }
+    }
+
+    function adjustFontSize(element) {
+        let fontSize = 8; // الحجم الافتراضي حسب طلبك في CSS
+        element.style.fontSize = fontSize + "pt";
+        while (element.scrollHeight > element.offsetHeight && fontSize > 5) {
+            fontSize -= 0.5;
+            element.style.fontSize = fontSize + "pt";
         }
     }
     function previewImage(input) {
