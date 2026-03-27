@@ -201,23 +201,34 @@
         const axis = document.getElementById("axis-labels");
         axis.innerHTML = ""; 
         if (target <= 0) return;
-        let step = target / 10; 
+
+        let step;
+        
+        // إذا كان الرقم 100,000 أو أكثر، القفزة تكون كل 10 آلاف
+        if (target >= 100000) {
+            step = 10000;
+        } 
+        // إذا كان الرقم بين 1,000 و 100,000، القفزة تكون كل 1,000
+        else if (target >= 1000) {
+            step = 1000;
+        } 
+        // إذا كان الرقم أقل من 1,000، القفزة تكون كل 100
+        else {
+            step = 100;
+        }
+
+        // إنشاء 11 نقطة (من 0 إلى 10) لضمان تغطية النطاق
         for (let i = 0; i <= 10; i++) {
+            let labelValue = step * i;
+            
+            // التوقف إذا تجاوزنا الرقم المطلوب بمسافة كبيرة ليبقى الرسم متناسقاً
+            if (labelValue > target + step) break;
+
             let label = document.createElement("div");
-            label.innerText = Math.round(step * i).toLocaleString();
+            label.innerText = labelValue.toLocaleString();
             axis.appendChild(label);
         }
     }
-
-    function adjustFontSize(element) {
-        let fontSize = 8;
-        element.style.fontSize = fontSize + "pt";
-        while (element.scrollHeight > element.offsetHeight && fontSize > 5) {
-            fontSize -= 0.5;
-            element.style.fontSize = fontSize + "pt";
-        }
-    }
-
     function previewImage(input) {
         if (input.files && input.files[0]) {
             let reader = new FileReader();
