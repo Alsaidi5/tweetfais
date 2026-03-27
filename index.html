@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <title>نظام تقارير التغريدات والتحليل - المطور</title>
     <style>
+        /* إضافة الخط عبر jsDelivr لضمان الاستقرار على الجوال */
         @font-face {
             font-family: 'XB Niloofar';
-            src: local('XB Niloofar');
+            src: url('https://cdn.jsdelivr.net/gh/Alsaidi5/faisform/XB-NiloofarBd.woff') format('woff');
             font-weight: bold;
+            font-style: normal;
+            font-display: swap;
         }
+
         @page { size: A4 landscape; margin: 0; }
         body { margin: 0; padding: 0; background: #e0e0e0; font-family: 'XB Niloofar', 'Arial', sans-serif; }
 
@@ -18,7 +22,7 @@
             padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
         }
         .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; }
         .full { grid-column: span 2; }
         button { 
             background: #00796b; color: white; border: none; padding: 15px; 
@@ -29,30 +33,34 @@
         #report-page {
             width: 297mm; height: 210mm;
             margin: auto; position: relative;
-            /* الطريقة المزدوجة للخلفية من مستودع faisform */
+            /* الخلفية من مستودع tweetfais */
             background-image: url('https://raw.githubusercontent.com/Alsaidi5/tweetfais/main/template.jpg'), url('template.jpg'); 
             background-size: 100% 100%;
+            background-repeat: no-repeat;
             background-color: white;
             display: none; 
         }
 
         .absolute-text { position: absolute; color: #333; font-weight: bold; pointer-events: none; }
 
+        /* إحداثيات العناصر - لم يتم تغيير الأرقام */
         #p-serial { top: 24mm; left: 258mm; font-size: 24pt; color: #fff; width: 20mm; text-align: center; }
         #p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
         #p-date      { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
         #p-keywords  { top: 97mm; left: 193mm; font-size: 14pt; width: 40mm; text-align: center; line-height: 1.4; }
-        #p-likes   { top: 113mm; left: 210mm; font-size: 14pt; color: #000000; }
-        #p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000000; }
+        
+        /* مطابقة أسماء الإعجابات والردود مع الـ CSS */
+        #p-likes   { top: 113mm; left: 210mm; font-size: 14pt; color: #000000; font-weight: bold; }
+        #p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000000; font-weight: bold; }
 
         #p-text { 
             top: 75mm; right: 63mm; width: 40mm; height: 20mm;
             font-size: 8pt; line-height: 1.4; text-align:center;
             overflow: hidden; white-space: pre-wrap;
-            display: flex; align-items: flex-start;
+            display: flex; align-items: flex-start; justify-content: center;
         }
 
-        /* الرسم البياني - العمود الثابت */
+        /* الرسم البياني */
         .views-chart-container {
             position: absolute;
             top: 40mm; left: 154mm;
@@ -67,28 +75,20 @@
             overflow: hidden; border: 1px solid #ccc; position: relative;
         }
         
-        .progress-fill {
-            width: 100%; background: #D4A829;
-            height: 100% !important; /* ثابت ممتلئ دائماً */
-        }
+        .progress-fill { width: 100%; background: #D4A829; height: 100% !important; }
 
         .chart-layout { display: flex; align-items: flex-end; gap: 10px; }
         .axis-numbers { 
-            display: flex; 
-            flex-direction: column-reverse; 
-            justify-content: space-between; 
-            height: 110mm; 
-            font-size: 9pt; 
-            font-weight: bold; 
-            color: #555;
-            text-align: left;
-            min-width: 45px;
+            display: flex; flex-direction: column-reverse; justify-content: space-between; 
+            height: 110mm; font-size: 9pt; font-weight: bold; color: #555;
+            text-align: left; min-width: 45px;
         }
 
+        /* تعديل الرابط ليعمل على الجوال باللمس */
         #p-link-btn {
-            position: absolute; top: 142mm; left: 190mm; width: 30mm;
-            padding: 25px; background: transparent; color: transparent;
-            text-decoration: none; display: none; 
+            position: absolute; top: 142mm; left: 190mm; width: 35mm; height: 12mm;
+            background: rgba(255, 255, 255, 0.01); 
+            text-decoration: none; display: none; z-index: 100; cursor: pointer;
         }
 
         .img-box {
@@ -165,21 +165,22 @@
         document.getElementById("p-newspaper").innerText = document.getElementById("newspaper").value;
         document.getElementById("p-date").innerText = document.getElementById("dateText").value;
         document.getElementById("p-keywords").innerText = document.getElementById("keywords").value;
-        document.getElementById("p-likes").innerText = (document.getElementById("likesCount").value || 0);
-        document.getElementById("p-replies").innerText = (document.getElementById("repliesCount").value || 0);
+        
+        // ربط الحقول الجديدة
+        document.getElementById("p-likes").innerText = (document.getElementById("likesCount").value || "");
+        document.getElementById("p-replies").innerText = (document.getElementById("repliesCount").value || "");
         
         const textElem = document.getElementById("p-text");
         textElem.innerText = document.getElementById("fullText").value;
         adjustFontSize(textElem);
 
-        // منطق العداد التنازلي (10 أرقام)
         let count = parseFloat(document.getElementById("viewsCount").value) || 0;
         updateAxisLabels(count);
 
         let link = document.getElementById("newsLink").value;
         let btn = document.getElementById("p-link-btn");
-        if(link && link.startsWith('http')) {
-            btn.href = link;
+        if(link && link.trim().startsWith('http')) {
+            btn.href = link.trim();
             btn.style.display = "block";
         } else {
             btn.style.display = "none";
@@ -189,27 +190,20 @@
     function updateAxisLabels(target) {
         const axis = document.getElementById("axis-labels");
         axis.innerHTML = ""; 
-        
         if (target <= 0) return;
-
-        // تقسيم الرقم المدخل إلى 10 أجزاء متساوية تماماً
         let step = target / 10; 
-
-        // إنشاء 11 علامة لضمان ظهور 10 قفزات (من صفر إلى الرقم النهائي)
         for (let i = 0; i <= 10; i++) {
             let labelValue = step * i;
             let label = document.createElement("div");
-            
-            // تنسيق الرقم بفاصلة الآلاف وتقريبه
             label.innerText = Math.round(labelValue).toLocaleString();
             axis.appendChild(label);
         }
     }
 
     function adjustFontSize(element) {
-        let fontSize = 13;
+        let fontSize = 8; // الحجم الافتراضي حسب طلبك في CSS
         element.style.fontSize = fontSize + "pt";
-        while (element.scrollHeight > element.offsetHeight && fontSize > 7) {
+        while (element.scrollHeight > element.offsetHeight && fontSize > 5) {
             fontSize -= 0.5;
             element.style.fontSize = fontSize + "pt";
         }
