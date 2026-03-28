@@ -2,15 +2,12 @@
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام تقارير التغريدات والتحليل - المطور</title>
+    <title>نظام تقارير التغريدات - متعدد الصفحات</title>
     <style>
-        /* إضافة الخط عبر jsDelivr لضمان الاستقرار على الجوال */
         @font-face {
             font-family: 'XB Niloofar';
             src: url('https://cdn.jsdelivr.net/gh/Alsaidi5/faisform/XB-NiloofarBd.woff') format('woff');
-            font-weight: bold;
-            font-style: normal;
-            font-display: swap;
+            font-weight: bold; font-style: normal; font-display: swap;
         }
 
         @page { size: A4 landscape; margin: 0; }
@@ -24,16 +21,160 @@
         .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; }
         .full { grid-column: span 2; }
-        button { 
-            background: #00796b; color: white; border: none; padding: 15px; 
-            border-radius: 8px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; 
-        }
+        
+        .btns-group { display: flex; gap: 10px; }
+        .btn-add { background: #00796b; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; flex: 2; font-size: 18px; font-weight: bold; }
+        .btn-print { background: #1976d2; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 18px; font-weight: bold; }
+        button:hover { opacity: 0.9; }
+
+        /* حاوية الصفحات */
+        #pages-container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding-bottom: 50px; }
 
         /* قالب التقرير */
-        #report-page {
+        .report-page {
             width: 297mm; height: 210mm;
-            margin: auto; position: relative;
-            background-color: white;
+            position: relative; background-color: white;
+            overflow: hidden; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            page-break-after: always;
+        }
+
+        .bg-template { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; }
+        .absolute-text, .views-chart-container, .p-link-btn, .img-box { position: absolute; z-index: 10; color: #333; font-weight: bold; pointer-events: none; }
+
+        /* الإحداثيات الدقيقة (نفس كودك الأصلي) */
+        .p-serial { top: 24mm; left: 258mm; font-size: 24pt; color: #fff; width: 20mm; text-align: center; }
+        .p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
+        .p-date { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
+        .p-keywords { top: 89mm; left: 193mm; font-size: 14pt; width: 40mm; height: 14mm; text-align: center; display: flex; align-items: center; justify-content: center; }
+        .p-likes { top: 113mm; left: 210mm; font-size: 14pt; color: #000; }
+        .p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000; }
+        .p-text { top: 75mm; right: 63mm; width: 40mm; height: 20mm; font-size: 9pt; line-height: 1.6; text-align:center; display: flex; align-items: center; justify-content: center; }
+
+        .views-chart-container { top: 40mm; left: 154mm; display: flex; flex-direction: column; align-items: center; }
+        .progress-bg { width: 15mm; height: 110mm; background: #fff; border-radius: 4px; border: 1px solid #fff; position: relative; }
+        .progress-fill { width: 100%; background: #D4A829; height: 100%; }
+        .chart-layout { display: flex; align-items: flex-end; gap: 10px; }
+        .axis-numbers { display: flex; flex-direction: column-reverse; justify-content: space-between; height: 110mm; font-size: 4pt; color: #555; text-align: left; min-width: 45px; }
+
+        .p-link-btn { top: 142mm; left: 190mm; width: 35mm; height: 15mm; background: rgba(255, 255, 255, 0.01); text-decoration: none; cursor: pointer; pointer-events: auto; }
+        .img-box { top: 20mm; left: 25mm; width: 120mm; height: 140mm; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .p-img { max-width: 100%; max-height: 100%; object-fit: cover; }
+
+        /* زر حذف الصفحة (يظهر في المعاينة فقط) */
+        .delete-btn { position: absolute; top: 10px; right: 10px; background: red; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; z-index: 100; }
+
+        @media print {
+            .no-print, .delete-btn { display: none !important; }
+            body { background: white; }
+            .report-page { margin: 0 !important; box-shadow: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print">
+    <h2>نظام التقارير المتعددة 📁</h2>
+    <div class="grid-input">
+        <input type="text" id="serialNum" placeholder="الرقم التسلسلي">
+        <input type="text" id="newspaper" placeholder="اسم الحساب">
+        <input type="text" id="dateText" placeholder="المتابعون">
+        <input type="number" id="likesCount" placeholder="الإعجابات">
+        <input type="number" id="repliesCount" placeholder="الردود">
+        <input type="number" id="viewsCount" placeholder="المشاهدات">
+        <textarea id="keywords" placeholder="الهاشتاقات" class="full"></textarea>
+        <textarea id="fullText" rows="3" placeholder="نص التغريدة" class="full"></textarea>
+        <input type="url" id="newsLink" placeholder="رابط التغريدة">
+        <div class="full"><input type="file" id="imageInput" accept="image/*"></div>
+    </div>
+    <div class="btns-group">
+        <button class="btn-add" onclick="addNewPage()">➕ إضافة هذه الصفحة للقائمة</button>
+        <button class="btn-print" onclick="window.print()">🖨️ طباعة الكل PDF</button>
+    </div>
+</div>
+
+<div id="pages-container">
+    </div>
+
+<script>
+    let currentImgData = "";
+
+    // التعامل مع الصورة
+    document.getElementById('imageInput').onchange = function(e) {
+        let reader = new FileReader();
+        reader.onload = function(ev) { currentImgData = ev.target.result; };
+        reader.readAsDataURL(e.target.files[0]);
+    };
+
+    function addNewPage() {
+        const container = document.getElementById("pages-container");
+        
+        // جلب البيانات من الفورم
+        const data = {
+            serial: document.getElementById("serialNum").value,
+            acc: document.getElementById("newspaper").value,
+            fol: document.getElementById("dateText").value,
+            likes: document.getElementById("likesCount").value,
+            reps: document.getElementById("repliesCount").value,
+            views: document.getElementById("viewsCount").value,
+            tags: document.getElementById("keywords").value,
+            txt: document.getElementById("fullText").value,
+            lnk: document.getElementById("newsLink").value,
+            img: currentImgData
+        };
+
+        // إنشاء عنصر الصفحة الجديدة
+        const pageDiv = document.createElement("div");
+        pageDiv.className = "report-page";
+        
+        // بناء محتوى الصفحة (نفس الهيكل الأصلي)
+        pageDiv.innerHTML = `
+            <button class="delete-btn" onclick="this.parentElement.remove()">حذف</button>
+            <img src="https://cdn.jsdelivr.net/gh/Alsaidi5/tweetfais@main/template.jpg" class="bg-template">
+            <div class="p-serial absolute-text">${data.serial}</div>
+            <div class="p-newspaper absolute-text">${data.acc}</div>
+            <div class="p-date absolute-text">${data.fol}</div>
+            <div class="p-keywords absolute-text">${data.tags}</div>
+            <div class="p-likes absolute-text">${data.likes}</div>
+            <div class="p-replies absolute-text">${data.reps}</div>
+            <div class="p-text absolute-text">${data.txt}</div>
+            <div class="views-chart-container">
+                <div class="chart-layout">
+                    <div class="axis-numbers">${generateAxis(data.views)}</div>
+                    <div class="progress-bg"><div class="progress-fill"></div></div>
+                </div>
+            </div>
+            <a href="${data.lnk}" target="_blank" class="p-link-btn" style="display:${data.lnk ? 'block' : 'none'}"></a>
+            <div class="img-box"><img src="${data.img}" class="p-img"></div>
+        `;
+
+        container.appendChild(pageDiv);
+        
+        // مسح الفورم لتسهيل تعبئة التقرير التالي
+        clearForm();
+    }
+
+    function generateAxis(target) {
+        if (!target || target <= 0) return "";
+        let html = "";
+        let step = target / 10;
+        for (let i = 0; i <= 10; i++) {
+            html += `<div>${Math.round(step * i).toLocaleString()}</div>`;
+        }
+        return html;
+    }
+
+    function clearForm() {
+        document.getElementById("serialNum").value = "";
+        document.getElementById("likesCount").value = "";
+        document.getElementById("repliesCount").value = "";
+        document.getElementById("viewsCount").value = "";
+        document.getElementById("fullText").value = "";
+        document.getElementById("imageInput").value = "";
+        currentImgData = "";
+    }
+</script>
+</body>
+</html>
             overflow: hidden;
             display: none; 
         }
