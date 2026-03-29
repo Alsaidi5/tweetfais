@@ -2,175 +2,229 @@
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>نظام التقارير - المعاينة المباشرة والتعدد</title>
+    <title>نظام تقارير التغريدات والتحليل - المطور</title>
     <style>
+        /* إضافة الخط عبر jsDelivr لضمان الاستقرار على الجوال */
         @font-face {
             font-family: 'XB Niloofar';
             src: url('https://cdn.jsdelivr.net/gh/Alsaidi5/faisform/XB-NiloofarBd.woff') format('woff');
-            font-weight: bold; font-style: normal; font-display: swap;
+            font-weight: bold;
+            font-style: normal;
+            font-display: swap;
         }
 
         @page { size: A4 landscape; margin: 0; }
-        body { margin: 0; padding: 0; background: #f4f7f6; font-family: 'XB Niloofar', sans-serif; }
+        body { margin: 0; padding: 0; background: #e0e0e0; font-family: 'XB Niloofar', 'Arial', sans-serif; }
 
-        /* لوحة التحكم الثابتة في الأعلى */
+        /* لوحة التحكم */
         .no-print { 
-            max-width: 900px; margin: 20px auto; background: white; 
-            padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            max-width: 800px; margin: 20px auto; background: white; 
+            padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
         }
-        .grid-input { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .full { grid-column: span 3; }
-        
-        .btns-group { display: flex; gap: 10px; }
-        .btn-add { background: #00897b; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; flex: 2; font-size: 18px; font-weight: bold; }
-        .btn-print { background: #1e88e5; color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 18px; font-weight: bold; }
-
-        /* منطقة المعاينة المباشرة */
-        .preview-label { text-align: center; color: #00796b; font-weight: bold; margin-bottom: 10px; }
-        
-        /* حاوية الصفحات (المعاينة والقديمة) */
-        #main-wrapper { display: flex; flex-direction: column; align-items: center; gap: 30px; padding-bottom: 50px; }
-
-        /* قالب التقرير المشترك */
-        .report-page {
-            width: 297mm; height: 210mm; position: relative; background: white; overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.15); page-break-after: always;
+        .grid-input { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: sans-serif; }
+        .full { grid-column: span 2; }
+        button { 
+            background: #00796b; color: white; border: none; padding: 15px; 
+            border-radius: 8px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; 
         }
 
-        .bg-template { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: fill; z-index: 0; }
-        .absolute-text, .views-chart-container, .p-link-btn, .img-box { position: absolute; z-index: 10; color: #333; font-weight: bold; pointer-events: none; }
+        /* قالب التقرير */
+        #report-page {
+            width: 297mm; height: 210mm;
+            margin: auto; position: relative;
+            background-color: white;
+            overflow: hidden;
+            display: none; 
+        }
 
-        /* الإحداثيات الأصلية بالملّي */
-        .p-serial { top: 24mm; left: 258mm; font-size: 24pt; color: #fff; width: 20mm; text-align: center; }
-        .p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
-        .p-date { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
-        .p-keywords { top: 89mm; left: 193mm; font-size: 14pt; width: 40mm; height: 14mm; text-align: center; display: flex; align-items: center; justify-content: center; }
-        .p-likes { top: 113mm; left: 210mm; font-size: 14pt; color: #000; }
-        .p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000; }
-        .p-text { top: 75mm; right: 63mm; width: 40mm; height: 20mm; font-size: 9pt; line-height: 1.6; text-align:center; display: flex; align-items: center; justify-content: center; }
+        /* الحل الخارق: صورة الخلفية كعنصر مستقل */
+        .bg-template {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: fill;
+            z-index: 0;
+        }
 
-        .views-chart-container { top: 40mm; left: 154mm; display: flex; flex-direction: column; align-items: center; }
-        .progress-bg { width: 15mm; height: 110mm; background: #fff; border-radius: 4px; border: 1px solid #fff; position: relative; }
-        .progress-fill { width: 100%; background: #D4A829; height: 100%; }
+        /* رفع العناصر فوق الخلفية */
+        .absolute-text, .views-chart-container, #p-link-btn, .img-box {
+            position: absolute;
+            z-index: 10;
+            color: #333;
+            font-weight: bold;
+            pointer-events: none;
+        }
+
+        /* إحداثيات العناصر */
+        #p-serial { top: 24mm; left: 258mm; font-size: 24pt; color: #fff; width: 20mm; text-align: center; }
+        #p-newspaper { top: 46mm; left: 184mm; font-size: 12pt; width: 100mm; text-align: center; color: #fff;}
+        #p-date      { top: 62mm; left: 197mm; font-size: 14pt; width: 30mm; text-align: center; }
+        
+        /* تمركز الهاشتاقات في المنتصف عمودياً وأفقياً */
+        #p-keywords  { 
+            top: 89mm; left: 193mm; font-size: 14pt; width: 40mm; height: 14mm;
+            text-align: center; line-height: 1.2; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        #p-likes   { top: 113mm; left: 210mm; font-size: 14pt; color: #000000; }
+        #p-replies { top: 131mm; left: 210mm; font-size: 14pt; color: #000000; }
+
+        /* تمركز نص التغريدة في المنتصف عمودياً وأفقياً */
+        #p-text { 
+            top: 75mm; right: 63mm; width: 40mm; height: 20mm;
+            font-size: 9pt; line-height: 1.6; text-align:center;
+            overflow: hidden; white-space: pre-wrap;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* الرسم البياني */
+        .views-chart-container {
+            top: 40mm; left: 154mm;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+        }
+        .header-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .views-circle { width: 12px; height: 12px; background: #D4A829; border-radius: 50%; }
+        .views-label { font-size: 12pt; font-weight: bold; color: #444; }
+        .progress-bg {
+            width: 15mm; height: 110mm; background: #fff; border-radius: 4px;
+            overflow: hidden; border: 1px solid #fff; position: relative;
+        }
+        .progress-fill { width: 100%; background: #D4A829; height: 100% !important; }
         .chart-layout { display: flex; align-items: flex-end; gap: 10px; }
-        .axis-numbers { display: flex; flex-direction: column-reverse; justify-content: space-between; height: 110mm; font-size: 4pt; color: #555; text-align: left; min-width: 45px; }
+        .axis-numbers { 
+            display: flex; flex-direction: column-reverse; justify-content: space-between; 
+            height: 110mm; font-size: 4pt; font-weight: bold; color: #555;
+            text-align: left; min-width: 45px;
+        }
 
-        .p-link-btn { top: 142mm; left: 190mm; width: 35mm; height: 15mm; background: transparent; text-decoration: none; cursor: pointer; pointer-events: auto; }
-        .img-box { top: 20mm; left: 25mm; width: 120mm; height: 140mm; display: flex; align-items: center; justify-content: center; }
-        .p-img { max-width: 100%; max-height: 100%; object-fit: cover; }
+        /* تعديل الرابط للجوال */
+        #p-link-btn {
+            top: 142mm; left: 190mm; width: 35mm; height: 15mm;
+            background: rgba(255, 255, 255, 0.01); 
+            text-decoration: none; display: none; cursor: pointer;
+            pointer-events: auto; /* السماح باللمس */
+        }
 
-        .delete-tag { position: absolute; top: 10px; right: 10px; background: #ef5350; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; z-index: 20; font-family: sans-serif; }
+        .img-box {
+            top: 20mm; left: 25mm;
+            width: 120mm; height: 140mm; 
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        #p-img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 4px; }
 
         @media print {
-            .no-print, .delete-tag, .preview-label { display: none !important; }
-            #main-wrapper { gap: 0; padding: 0; }
-            .report-page { margin: 0 !important; box-shadow: none !important; }
+            .no-print { display: none !important; }
+            #report-page { 
+                display: block !important; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            body { background: white; }
         }
     </style>
 </head>
 <body>
 
 <div class="no-print">
-    <h2>🛠️ محرر التقارير الفوري</h2>
+    <h2>نظام تقارير التغريدات - الإصدار النهائي المدمج</h2>
     <div class="grid-input">
-        <input type="text" id="serialNum" placeholder="الرقم التسلسلي" oninput="liveSync()">
-        <input type="text" id="newspaper" placeholder="اسم الحساب" oninput="liveSync()">
-        <input type="text" id="dateText" placeholder="المتابعون" oninput="liveSync()">
-        <input type="number" id="likesCount" placeholder="الإعجابات" oninput="liveSync()">
-        <input type="number" id="repliesCount" placeholder="الردود" oninput="liveSync()">
-        <input type="number" id="viewsCount" placeholder="المشاهدات" oninput="liveSync()">
-        <textarea id="keywords" placeholder="الهاشتاقات" class="full" oninput="liveSync()"></textarea>
-        <textarea id="fullText" rows="3" placeholder="نص التغريدة" class="full" oninput="liveSync()"></textarea>
-        <input type="url" id="newsLink" placeholder="رابط التغريدة" oninput="liveSync()">
-        <div class="full"><input type="file" id="imageInput" accept="image/*" onchange="previewImage(this)"></div>
+        <input type="text" id="serialNum" placeholder="الرقم التسلسلي" oninput="sync()">
+        <input type="text" id="newspaper" placeholder="اسم الحساب" oninput="sync()">
+        <input type="text" id="dateText" placeholder="المتابعون" oninput="sync()">
+        <input type="number" id="likesCount" placeholder="عدد الإعجابات " oninput="sync()">
+        <input type="number" id="repliesCount" placeholder="عدد الردود " oninput="sync()">
+        <input type="number" id="viewsCount" placeholder="إجمالي المشاهدات" oninput="sync()">
+        <textarea id="keywords" placeholder=" الهاشتاقات" class="full" oninput="sync()"></textarea>
+        <textarea id="fullText" rows="4" placeholder="نص التغريدة" class="full" oninput="sync()"></textarea>
+        <input type="url" id="newsLink" placeholder="رابط التغريدة" oninput="sync()">
+        <div class="full">
+            <input type="file" id="imageInput" accept="image/*" onchange="previewImage(this)">
+        </div>
     </div>
-    <div class="btns-group">
-        <button class="btn-add" onclick="pushToFinalList()">✅ اعتماد هذه الصفحة وإضافة جديدة</button>
-        <button class="btn-print" onclick="window.print()">🖨️ طباعة الكل (PDF)</button>
-    </div>
+    <button onclick="window.print()">طباعة التقرير PDF 🖨️</button>
 </div>
 
-<div id="main-wrapper">
-    <div class="preview-label">--- معاينة الصفحة الحالية ---</div>
-    <div id="live-preview" class="report-page">
-        <img src="https://cdn.jsdelivr.net/gh/Alsaidi5/tweetfais@main/template.jpg" class="bg-template">
-        <div id="v-serial" class="p-serial absolute-text"></div>
-        <div id="v-newspaper" class="p-newspaper absolute-text"></div>
-        <div id="v-date" class="p-date absolute-text"></div>
-        <div id="v-keywords" class="p-keywords absolute-text"></div>
-        <div id="v-likes" class="p-likes absolute-text"></div>
-        <div id="v-replies" class="p-replies absolute-text"></div>
-        <div id="v-text" class="p-text absolute-text"></div>
-        <div class="views-chart-container">
-            <div class="chart-layout">
-                <div id="v-axis" class="axis-numbers"></div>
-                <div class="progress-bg"><div class="progress-fill"></div></div>
-            </div>
+<div id="report-page">
+    <img src="https://cdn.jsdelivr.net/gh/Alsaidi5/tweetfais@main/template.jpg" class="bg-template" id="main-bg">
+    
+    <div id="p-serial" class="absolute-text"></div>
+    <div id="p-newspaper" class="absolute-text"></div>
+    <div id="p-date" class="absolute-text"></div>
+    <div id="p-keywords" class="absolute-text"></div>
+    <div id="p-likes" class="absolute-text"></div>
+    <div id="p-replies" class="absolute-text"></div>
+    <div id="p-text" class="absolute-text"></div>
+    
+    <div class="views-chart-container">
+        <div class="header-row"><div class="views-circle"></div><div class="views-label">المشاهدات</div></div>
+        <div class="chart-layout">
+            <div id="axis-labels" class="axis-numbers"></div>
+            <div class="progress-bg"><div class="progress-fill"></div></div>
         </div>
-        <div class="img-box"><img id="v-img" class="p-img" src=""></div>
     </div>
 
-    <div class="preview-label" style="margin-top:40px;">--- الصفحات المعتمدة للطباعة ---</div>
-    <div id="final-pages-list"></div>
+    <a id="p-link-btn" target="_blank"></a>
+    <div class="img-box"><img id="p-img" src=""></div>
 </div>
 
 <script>
-    let tempImgBase64 = "";
-
-    // 1. وظيفة المعاينة المباشرة (Sync)
-    function liveSync() {
-        document.getElementById("v-serial").innerText = document.getElementById("serialNum").value;
-        document.getElementById("v-newspaper").innerText = document.getElementById("newspaper").value;
-        document.getElementById("v-date").innerText = document.getElementById("dateText").value;
-        document.getElementById("v-keywords").innerText = document.getElementById("keywords").value;
-        document.getElementById("v-likes").innerText = document.getElementById("likesCount").value;
-        document.getElementById("v-replies").innerText = document.getElementById("repliesCount").value;
-        document.getElementById("v-text").innerText = document.getElementById("fullText").value;
+    function sync() {
+        document.getElementById("report-page").style.display = "block";
+        document.getElementById("p-serial").innerText = document.getElementById("serialNum").value;
+        document.getElementById("p-newspaper").innerText = document.getElementById("newspaper").value;
+        document.getElementById("p-date").innerText = document.getElementById("dateText").value;
+        document.getElementById("p-keywords").innerText = document.getElementById("keywords").value;
+        document.getElementById("p-likes").innerText = (document.getElementById("likesCount").value || "");
+        document.getElementById("p-replies").innerText = (document.getElementById("repliesCount").value || "");
         
-        let views = document.getElementById("viewsCount").value;
-        const axis = document.getElementById("v-axis");
-        axis.innerHTML = "";
-        if(views > 0) {
-            let step = views / 10;
-            for(let i=0; i<=10; i++) axis.innerHTML += `<div>${Math.round(step*i).toLocaleString()}</div>`;
+        const textElem = document.getElementById("p-text");
+        textElem.innerText = document.getElementById("fullText").value;
+        adjustFontSize(textElem);
+
+        let count = parseFloat(document.getElementById("viewsCount").value) || 0;
+        updateAxisLabels(count);
+
+        let link = document.getElementById("newsLink").value;
+        let btn = document.getElementById("p-link-btn");
+        if(link && link.trim().startsWith('http')) {
+            btn.href = link.trim();
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+    }function updateAxisLabels(target) {
+        const axis = document.getElementById("axis-labels");
+        axis.innerHTML = ""; 
+        if (target <= 0) return;
+        let step = target / 10; 
+        for (let i = 0; i <= 10; i++) {
+            let labelValue = step * i;
+            let label = document.createElement("div");
+            label.innerText = Math.round(labelValue).toLocaleString();
+            axis.appendChild(label);
         }
     }
 
+    function adjustFontSize(element) {
+        let fontSize = 8; // الحجم الافتراضي حسب طلبك في CSS
+        element.style.fontSize = fontSize + "pt";
+        while (element.scrollHeight > element.offsetHeight && fontSize > 5) {
+            fontSize -= 0.5;
+            element.style.fontSize = fontSize + "pt";
+        }
+    }
     function previewImage(input) {
         if (input.files && input.files[0]) {
             let reader = new FileReader();
             reader.onload = function(e) {
-                tempImgBase64 = e.target.result;
-                document.getElementById("v-img").src = tempImgBase64;
+                document.getElementById("p-img").src = e.target.result;
+                document.getElementById("report-page").style.display = "block";
             }
             reader.readAsDataURL(input.files[0]);
         }
-    }
-
-    // 2. وظيفة التثبيت (Add)
-    function pushToFinalList() {
-        const list = document.getElementById("final-pages-list");
-        const currentPage = document.getElementById("live-preview");
-        
-        // استنساخ الصفحة الحالية بالكامل
-        const newNode = currentPage.cloneNode(true);
-        newNode.removeAttribute("id"); // إزالة الـ ID لعدم التكرار
-        
-        // إضافة زر حذف خاص بهذه الصفحة
-        const delBtn = document.createElement("button");
-        delBtn.className = "delete-tag";
-        delBtn.innerText = "حذف هذه الصفحة";
-        delBtn.onclick = function() { this.parentElement.remove(); };
-        newNode.appendChild(delBtn);
-
-        list.appendChild(newNode);
-
-        // مسح الفورم والبدء من جديد
-        document.querySelectorAll('.no-print input, .no-print textarea').forEach(i => i.value = "");
-        document.getElementById("v-img").src = "";
-        tempImgBase64 = "";
-        liveSync();
     }
 </script>
 </body>
